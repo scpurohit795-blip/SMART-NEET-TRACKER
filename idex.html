@@ -1,0 +1,670 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photon NEET Tracker & Student Directory</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for interactive analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="pb-24 pt-4 px-3 sm:px-6 max-w-lg sm:max-w-4xl mx-auto min-h-screen flex flex-col justify-between">
+
+    <!-- Top Header & Student Selector -->
+    <header class="glass-card p-4 rounded-2xl mb-4 shadow-xl flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-lg text-white shadow-lg">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-400 font-medium">Selected Student</p>
+                <h1 id="currentStudentDisplay" class="text-base font-bold text-white tracking-wide truncate max-w-[180px] sm:max-w-xs">
+                    Loading...
+                </h1>
+            </div>
+        </div>
+        <button onclick="openDirectoryModal()" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-users"></i>
+            <span>Directory</span>
+        </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main id="mainContainer" class="flex-1 space-y-4">
+
+        <!-- TAB 1: DASHBOARD & AI TARGET PLANNER -->
+        <section id="tab-dashboard" class="space-y-4">
+            
+            <!-- Overall NEET 720 Target Card -->
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden bg-gradient-to-br from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-500/30 space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">NEET Full Mock AI Goal</span>
+                        <h2 class="text-lg font-black text-white mt-1">Target: <span id="neetFullTargetDisplay" class="text-indigo-400">0</span> / 720</h2>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-slate-400">Latest Full Score</p>
+                        <p id="neetLatestScoreDisplay" class="text-base font-extrabold text-emerald-400">0 / 720</p>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+                        <span>Target Progress</span>
+                        <span id="neetTargetPct">0.0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div id="neetProgressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medal Tally Board -->
+            <div class="glass-card p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-indigo-500/10 border border-amber-500/20 flex justify-between items-center px-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-award text-amber-400 text-xl"></i>
+                    <div>
+                        <h3 class="text-xs font-bold text-amber-200 uppercase tracking-wider">Per-Exam Medals Won</h3>
+                        <p class="text-[10px] text-slate-400">Awarded when score ≥ target</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 text-center">
+                    <div>
+                        <span class="text-[10px] text-sky-400 font-bold">PHY</span>
+                        <p id="medalPhy" class="text-sm font-black text-amber-300">🥇 2</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-amber-400 font-bold">CHEM</span>
+                        <p id="medalChem" class="text-sm font-black text-amber-300">🥇 3</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-emerald-400 font-bold">BIO</span>
+                        <p id="medalBio" class="text-sm font-black text-amber-300">🥇 3</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Daily Exam Target Planner Display Card -->
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-violet-400"></i> AI Weekly Exam Targets
+                    </h2>
+                    <span class="text-[10px] text-violet-300 bg-violet-600/20 border border-violet-500/30 px-2 py-0.5 rounded-full font-medium">Auto AI Calculated</span>
+                </div>
+
+                <!-- Subject-Wise AI Targets Readout -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-sky-500/30">
+                        <p class="text-[10px] uppercase tracking-wider text-sky-400 font-semibold flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-atom"></i> Physics
+                        </p>
+                        <p id="statPhyTarget" class="text-sm font-extrabold text-white mt-1">85 / 100</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Next Test Target</p>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-amber-500/30">
+                        <p class="text-[10px] uppercase tracking-wider text-amber-400 font-semibold flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-flask"></i> Chemistry
+                        </p>
+                        <p id="statChemTarget" class="text-sm font-extrabold text-white mt-1">0 / 120</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Next Test Target</p>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-emerald-500/30">
+                        <p class="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-dna"></i> Biology
+                        </p>
+                        <p id="statBioTarget" class="text-sm font-extrabold text-white mt-1">0 / 200</p>
+                        <p class="text-[9px] text-slate-400 mt-1">Next Test Target</p>
+                    </div>
+                </div>
+
+                <!-- Recalculate AI Target Button -->
+                <button onclick="recalculateAiTargets()" class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-2.5 px-3 rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate text-xs"></i> Recalculate AI Targets (From Previous Papers)
+                </button>
+            </div>
+
+            <!-- Weak Subject Diagnostics Alert -->
+            <div id="diagnosticAlert" class="glass-card p-4 rounded-2xl border-l-4 border-amber-500 flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5"></i>
+                <div class="space-y-1">
+                    <h3 class="text-xs font-bold text-amber-300 uppercase tracking-wide">Diagnostic Alert</h3>
+                    <p id="diagnosticText" class="text-xs text-slate-300 leading-relaxed">
+                        No test records found for this student.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Subject-wise Latest Score & Grade Breakdown -->
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+                <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-violet-400"></i> Latest Practice Exam Performance vs AI Target
+                </h2>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-sky-400 font-semibold uppercase">Physics</p>
+                        <p id="sbjPhysics" class="text-base font-bold text-white mt-1">0 / 100</p>
+                        <span id="badgePhy" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 inline-block mt-1">--</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-amber-400 font-semibold uppercase">Chemistry</p>
+                        <p id="sbjChemistry" class="text-base font-bold text-white mt-1">0 / 120</p>
+                        <span id="badgeChem" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 inline-block mt-1">--</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <p class="text-[10px] text-emerald-400 font-semibold uppercase">Biology</p>
+                        <p id="sbjBiology" class="text-base font-bold text-white mt-1">0 / 200</p>
+                        <span id="badgeBio" class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 inline-block mt-1">--</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: MARKS & TEST HISTORY -->
+        <section id="tab-history" class="space-y-4 hidden">
+            <!-- Test Logs List -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center px-1">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Exam Logs</h2>
+                    <span class="text-[10px] text-slate-500">Weekly & NEET Full Mocks</span>
+                </div>
+                <div id="testHistoryList" class="space-y-2">
+                    <!-- Dynamic Test Items Inserted Here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ANALYTICS & DIRECTORY -->
+        <section id="tab-analytics" class="space-y-4 hidden">
+            <!-- Performance Chart Card -->
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+                <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-indigo-400"></i> Subject Performance Trends
+                </h2>
+                <div class="relative h-48 w-full">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Directory Quick View -->
+            <div class="glass-card p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-users text-indigo-400"></i> Registered Students
+                    </h2>
+                    <button onclick="openDirectoryModal()" class="text-xs text-indigo-400 hover:underline">Manage All</button>
+                </div>
+                <div id="directoryQuickList" class="space-y-2 max-h-48 overflow-y-auto hide-scrollbar">
+                    <!-- Quick Student Items -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[92%] max-w-lg glass-card rounded-2xl p-2 flex justify-around items-center shadow-2xl border border-slate-700/60 z-30">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-indigo-400 py-1 px-4 rounded-xl transition-all">
+            <i class="fa-solid fa-gauge-high text-base"></i>
+            <span class="text-[10px] font-semibold">Dashboard</span>
+        </button>
+        <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-4 rounded-xl transition-all">
+            <i class="fa-solid fa-list-check text-base"></i>
+            <span class="text-[10px] font-semibold">Test History</span>
+        </button>
+        <button onclick="switchTab('analytics')" id="nav-analytics" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 py-1 px-4 rounded-xl transition-all">
+            <i class="fa-solid fa-chart-column text-base"></i>
+            <span class="text-[10px] font-semibold">Analytics</span>
+        </button>
+    </nav>
+
+    <!-- STUDENT DIRECTORY MODAL -->
+    <div id="directoryModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-indigo-400"></i> Student Directory
+                </h3>
+                <button onclick="closeDirectoryModal()" class="text-slate-400 hover:text-white text-base">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Quick Roll Number Search Input -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Search by Roll Number or Name:</label>
+                <div class="relative">
+                    <input type="text" id="rollSearchInput" oninput="filterStudentList(this.value)" placeholder="Enter Roll Number (e.g., 11032)" class="w-full bg-slate-900 border border-slate-700 text-xs text-white rounded-xl p-3 pl-9 focus:outline-none focus:border-indigo-500">
+                    <i class="fa-solid fa-magnifying-glass text-slate-500 text-xs absolute left-3 top-3.5"></i>
+                </div>
+            </div>
+
+            <!-- Student Select List -->
+            <div class="space-y-2">
+                <p class="text-xs font-semibold text-slate-400">Select Student to View Marks:</p>
+                <div id="modalStudentList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    <!-- Dynamic Student Rows -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // --- DATA STORE & STATE ---
+        const DEFAULT_STUDENTS = {
+            "110**": {
+                name: "eg.SHUBHAM PUROHIT,
+                roll: "110**",
+                neetTarget720: 0,
+                targetsBySbj: { phy: 00, chem: 0, bio: 0 },
+                medals: { phy: 0, chem: 0, bio: 0 },
+                tests: []
+            }
+        };
+
+        let studentsData = {};
+        let activeRoll = "11032";
+        let chartInstance = null;
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            loadDatabase();
+            renderApp();
+            initChart();
+        };
+
+        function loadDatabase() {
+            const stored = localStorage.getItem("photon_neet_students_db");
+            if (stored) {
+                try {
+                    studentsData = JSON.parse(stored);
+                } catch(e) {
+                    studentsData = DEFAULT_STUDENTS;
+                }
+            } else {
+                studentsData = DEFAULT_STUDENTS;
+                saveDatabase();
+            }
+
+            const activeStored = localStorage.getItem("photon_neet_active_roll");
+            if (activeStored && studentsData[activeStored]) {
+                activeRoll = activeStored;
+            } else {
+                activeRoll = Object.keys(studentsData)[0] || "11032";
+            }
+        }
+
+        function saveDatabase() {
+            localStorage.setItem("photon_neet_students_db", JSON.stringify(studentsData));
+            localStorage.setItem("photon_neet_active_roll", activeRoll);
+        }
+
+        // --- RATING CALCULATOR ---
+        function getPerformanceGrade(score, maxScore) {
+            if (!maxScore || maxScore === 0) return { label: "Bad", color: "text-rose-400 bg-rose-500/20 border-rose-500/30" };
+            const pct = (score / maxScore) * 100;
+            if (pct >= 85) return { label: "Excellent", color: "text-emerald-400 bg-emerald-500/20 border-emerald-500/30" };
+            if (pct >= 65) return { label: "Good", color: "text-sky-400 bg-sky-500/20 border-sky-500/30" };
+            if (pct >= 45) return { label: "Average", color: "text-amber-400 bg-amber-500/20 border-amber-500/30" };
+            return { label: "Bad", color: "text-rose-400 bg-rose-500/20 border-rose-500/30" };
+        }
+
+        // --- AI TARGET CALCULATOR ---
+        function calculateAiTargetForStudent(student) {
+            const tests = (student.tests || []).filter(t => t.type === 'weekly');
+            const fullTests = (student.tests || []).filter(t => t.type === 'full');
+
+            // Weekly exam target logic
+            let weeklyTarget = { phy: 85, chem: 0, bio: 0 };
+            if (tests.length > 0) {
+                const latest = tests[tests.length - 1];
+                weeklyTarget = {
+                    phy: Math.min(100, Math.max(0, Math.round(latest.phy + 5))),
+                    chem: Math.min(120, Math.max(0, Math.round(latest.chem + 5))),
+                    bio: Math.min(200, Math.max(0, Math.round(latest.bio + 10)))
+                };
+            }
+
+            // NEET 720 full target logic
+            let neet720Target = 0;
+            if (fullTests.length > 0) {
+                const latestFull = fullTests[fullTests.length - 1];
+                neet720Target = Math.min(720, Math.round(latestFull.total + 20));
+            }
+
+            return { weekly: weeklyTarget, neet720: neet720Target };
+        }
+
+        function recalculateAiTargets() {
+            const student = studentsData[activeRoll];
+            if (!student) return;
+
+            const computed = calculateAiTargetForStudent(student);
+            student.targetsBySbj = computed.weekly;
+            student.neetTarget720 = computed.neet720;
+            saveDatabase();
+            renderApp();
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderApp() {
+            const student = studentsData[activeRoll];
+            if (!student) return;
+
+            // Header Display
+            document.getElementById("currentStudentDisplay").innerText = `${student.roll} - ${student.name}`;
+
+            // Full NEET 720 Goal Display
+            const neetGoal = student.neetTarget720 || 0;
+            document.getElementById("neetFullTargetDisplay").innerText = neetGoal;
+
+            const fullTests = (student.tests || []).filter(t => t.type === 'full');
+            if (fullTests.length > 0) {
+                const latestFull = fullTests[fullTests.length - 1];
+                document.getElementById("neetLatestScoreDisplay").innerText = `${latestFull.total} / 720`;
+                const pct = neetGoal > 0 ? ((latestFull.total / neetGoal) * 100).toFixed(1) : 0;
+                document.getElementById("neetTargetPct").innerText = `${pct}%`;
+                document.getElementById("neetProgressBar").style.width = `${Math.min(100, pct)}%`;
+            } else {
+                document.getElementById("neetLatestScoreDisplay").innerText = `0 / 720`;
+                document.getElementById("neetTargetPct").innerText = `0.0%`;
+                document.getElementById("neetProgressBar").style.width = `0%`;
+            }
+
+            // Medal Tally
+            const medals = student.medals || { phy: 2, chem: 3, bio: 3 };
+            document.getElementById("medalPhy").innerText = `🥇 ${medals.phy}`;
+            document.getElementById("medalChem").innerText = `🥇 ${medals.chem}`;
+            document.getElementById("medalBio").innerText = `🥇 ${medals.bio}`;
+
+            // AI Calculated Targets Display
+            let targets = student.targetsBySbj || { phy: 85, chem: 0, bio: 0 };
+
+            document.getElementById("statPhyTarget").innerText = `${targets.phy} / 100`;
+            document.getElementById("statChemTarget").innerText = `${targets.chem} / 120`;
+            document.getElementById("statBioTarget").innerText = `${targets.bio} / 200`;
+
+            const weeklyTests = (student.tests || []).filter(t => t.type === 'weekly');
+
+            if (weeklyTests.length > 0) {
+                const latest = weeklyTests[weeklyTests.length - 1];
+
+                // Subject Grades & Badges
+                const phyGrade = getPerformanceGrade(latest.phy, latest.maxPhy || 100);
+                const chemGrade = getPerformanceGrade(latest.chem, latest.maxChem || 120);
+                const bioGrade = getPerformanceGrade(latest.bio, latest.maxBio || 200);
+
+                document.getElementById("sbjPhysics").innerText = `${latest.phy} / ${latest.maxPhy || 100}`;
+                document.getElementById("badgePhy").innerText = `${phyGrade.label} (${latest.phy >= targets.phy ? 'Target Met' : 'Missed'})`;
+                document.getElementById("badgePhy").className = `text-[9px] px-2 py-0.5 rounded-full border inline-block mt-1 font-semibold ${latest.phy >= targets.phy ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' : 'text-rose-400 bg-rose-500/20 border-rose-500/30'}`;
+
+                document.getElementById("sbjChemistry").innerText = `${latest.chem} / ${latest.maxChem || 120}`;
+                document.getElementById("badgeChem").innerText = `${chemGrade.label} (${latest.chem >= targets.chem ? 'Target Met' : 'Missed'})`;
+                document.getElementById("badgeChem").className = `text-[9px] px-2 py-0.5 rounded-full border inline-block mt-1 font-semibold ${latest.chem >= targets.chem ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' : 'text-rose-400 bg-rose-500/20 border-rose-500/30'}`;
+
+                document.getElementById("sbjBiology").innerText = `${latest.bio} / ${latest.maxBio || 200}`;
+                document.getElementById("badgeBio").innerText = `${bioGrade.label} (${latest.bio >= targets.bio ? 'Target Met' : 'Missed'})`;
+                document.getElementById("badgeBio").className = `text-[9px] px-2 py-0.5 rounded-full border inline-block mt-1 font-semibold ${latest.bio >= targets.bio ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' : 'text-rose-400 bg-rose-500/20 border-rose-500/30'}`;
+
+                // Diagnostics Analysis
+                runDiagnostics(latest, targets);
+            } else {
+                document.getElementById("sbjPhysics").innerText = `0 / 100`;
+                document.getElementById("sbjChemistry").innerText = `0 / 120`;
+                document.getElementById("sbjBiology").innerText = `0 / 200`;
+                document.getElementById("badgePhy").innerText = `--`;
+                document.getElementById("badgeChem").innerText = `--`;
+                document.getElementById("badgeBio").innerText = `--`;
+                document.getElementById("diagnosticText").innerText = `No weekly exam logs found for ${student.name}.`;
+            }
+
+            renderHistoryList();
+            renderDirectoryQuickList();
+            updateChart();
+        }
+
+        function runDiagnostics(latestTest, targets) {
+            const phyGap = targets.phy - latestTest.phy;
+            const chemGap = targets.chem - latestTest.chem;
+            const bioGap = targets.bio - latestTest.bio;
+
+            let gaps = [];
+            if (phyGap > 0) gaps.push(`Physics: -${phyGap}`);
+            if (chemGap > 0) gaps.push(`Chemistry: -${chemGap}`);
+            if (bioGap > 0) gaps.push(`Biology: -${bioGap}`);
+
+            const diagEl = document.getElementById("diagnosticText");
+            if (gaps.length > 0) {
+                diagEl.innerText = `Missed AI Target in Previous Exam: ${gaps.join(" | ")}. Focus on these concepts before the next paper!`;
+            } else {
+                diagEl.innerText = `All AI subject targets achieved in previous exam! Target updated for upcoming test.`;
+            }
+        }
+
+        // --- TEST HISTORY LIST ---
+        function renderHistoryList() {
+            const listEl = document.getElementById("testHistoryList");
+            const tests = studentsData[activeRoll].tests || [];
+
+            if (tests.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No exam records available.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = tests.slice().reverse().map(t => {
+                const isFull = t.type === 'full';
+                return `
+                    <div class="glass-card p-3 rounded-xl flex items-center justify-between border-l-4 ${isFull ? 'border-emerald-500' : 'border-indigo-500'}">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-xs font-bold text-white">${t.name}</h4>
+                                <span class="text-[9px] px-1.5 py-0.2 rounded ${isFull ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'} font-semibold">${isFull ? 'NEET 720' : 'Weekly'}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${t.date}</p>
+                            <div class="flex gap-2 text-[10px] text-slate-300 mt-1">
+                                <span class="text-sky-400 font-semibold">P: ${t.phy}/${t.maxPhy || 100}</span>
+                                <span class="text-amber-400 font-semibold">C: ${t.chem}/${t.maxChem || 120}</span>
+                                <span class="text-emerald-400 font-semibold">B: ${t.bio}/${t.maxBio || 200}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-extrabold ${isFull ? 'text-emerald-400' : 'text-indigo-400'}">${t.total}/${t.maxTotal || 420}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- STUDENT DIRECTORY MODAL & ACTIONS ---
+        function openDirectoryModal() {
+            document.getElementById("rollSearchInput").value = "";
+            renderModalStudentList();
+            document.getElementById("directoryModal").classList.remove("hidden");
+        }
+
+        function closeDirectoryModal() {
+            document.getElementById("directoryModal").classList.add("hidden");
+        }
+
+        function filterStudentList(query) {
+            renderModalStudentList(query.trim().toLowerCase());
+        }
+
+        function selectStudent(roll) {
+            activeRoll = roll;
+            saveDatabase();
+            renderApp();
+            closeDirectoryModal();
+        }
+
+        function renderModalStudentList(filterQuery = "") {
+            const container = document.getElementById("modalStudentList");
+            const rolls = Object.keys(studentsData);
+
+            const filteredRolls = rolls.filter(r => {
+                const student = studentsData[r];
+                return r.toLowerCase().includes(filterQuery) || student.name.toLowerCase().includes(filterQuery);
+            });
+
+            if (filteredRolls.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No student found for "${filterQuery}"</p>`;
+                return;
+            }
+
+            container.innerHTML = filteredRolls.map(r => {
+                const s = studentsData[r];
+                const isActive = r === activeRoll;
+                return `
+                    <div onclick="selectStudent('${r}')" class="p-3 rounded-xl border ${isActive ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200' : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'} cursor-pointer flex justify-between items-center transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'} flex items-center justify-center text-xs font-bold">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold">${r} - ${s.name}</p>
+                                <p class="text-[10px] text-slate-400">${s.tests ? s.tests.length : 0} Exams Logged</p>
+                            </div>
+                        </div>
+                        ${isActive ? '<span class="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full font-bold">Active</span>' : '<span class="text-[10px] text-indigo-400 font-semibold flex items-center gap-1">View <i class="fa-solid fa-chevron-right text-[8px]"></i></span>'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDirectoryQuickList() {
+            const container = document.getElementById("directoryQuickList");
+            const rolls = Object.keys(studentsData);
+
+            container.innerHTML = rolls.map(r => {
+                const s = studentsData[r];
+                const isActive = r === activeRoll;
+                const t = s.targetsBySbj || { phy: 85, chem: 0, bio: 0 };
+                return `
+                    <div onclick="selectStudent('${r}')" class="p-2.5 rounded-xl bg-slate-900/50 border ${isActive ? 'border-indigo-500/80 bg-indigo-950/20' : 'border-slate-800'} flex justify-between items-center cursor-pointer hover:border-slate-700">
+                        <span class="text-xs text-slate-200 font-medium">${r} - ${s.name}</span>
+                        <span class="text-[10px] text-slate-400">AI Targets: P:${t.phy} C:${t.chem} B:${t.bio}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- NAVIGATION TABS ---
+        function switchTab(tab) {
+            document.getElementById("tab-dashboard").classList.add("hidden");
+            document.getElementById("tab-history").classList.add("hidden");
+            document.getElementById("tab-analytics").classList.add("hidden");
+
+            document.querySelectorAll("nav button").forEach(btn => {
+                btn.classList.remove("text-indigo-400");
+                btn.classList.add("text-slate-400");
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove("hidden");
+            document.getElementById(`nav-${tab}`).classList.add("text-indigo-400");
+            document.getElementById(`nav-${tab}`).classList.remove("text-slate-400");
+
+            if (tab === 'analytics') {
+                setTimeout(updateChart, 100);
+            }
+        }
+
+        // --- CHART ANALYTICS ---
+        function initChart() {
+            const ctx = document.getElementById("performanceChart").getContext("2d");
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Physics', data: [], borderColor: '#38bdf8', fill: false, tension: 0.3 },
+                        { label: 'Chemistry', data: [], borderColor: '#fbbf24', fill: false, tension: 0.3 },
+                        { label: 'Biology', data: [], borderColor: '#34d399', fill: false, tension: 0.3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 200,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!chartInstance) return;
+
+            const tests = (studentsData[activeRoll].tests || []).filter(t => t.type === 'weekly');
+            const labels = tests.map(t => t.name);
+
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = tests.map(t => t.phy);
+            chartInstance.data.datasets[1].data = tests.map(t => t.chem);
+            chartInstance.data.datasets[2].data = tests.map(t => t.bio);
+            chartInstance.update();
+        }
+    </script>
+</body>
+</html>
+```
